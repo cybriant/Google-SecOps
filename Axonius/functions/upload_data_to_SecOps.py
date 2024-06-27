@@ -13,7 +13,7 @@ def upload_axonius_data(myLogger, credentials, entities, customer_id):
     """
     try:
         if(customer_id == ""):
-            print("No Customer ID Provided!")
+            myLogger.critical("No Customer ID Provided!")
             exit()
             
         # Define the Chronicle Ingestion API endpoint
@@ -34,17 +34,17 @@ def upload_axonius_data(myLogger, credentials, entities, customer_id):
             headers={"Authorization": f"Bearer {credentials.token}"},
             data=payload_json,
         )
-        print("Status Code: " + str(response.status_code))
-        print("Response Content: \n" + str(response.content))
-        print("Response Headers: \n" + str(response.headers))
-        print("Response JSON: \n" + str(response.json()))
+        # myLogger.info("Status Code: " + str(response.status_code))
+        # myLogger.info("Response Content: \n" + str(response.content))
+        myLogger.info("Response Headers: \n" + str(response.headers))
+        # myLogger.info("Response JSON: \n" + str(response.json()))
 
         # Check the response status
         if response.status_code == 200:
-            myLogger.info(f"uploaded {len(entities)} assets")
-            print("Successfully uploaded asset data.")
+            myLogger.info(f"Uploaded {len(entities)} assets")
         else:
-            print(f"Failed to upload asset data.")
+            myLogger.critical(f"Failed to upload asset data.")
+            myLogger.critical("Response JSON: \n" + str(response.json()))
 
     except Exception as e:
-        print(f"Error uploading assets: {e}")
+        myLogger.critical(f"Error uploading assets: {e}")

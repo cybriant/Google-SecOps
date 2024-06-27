@@ -31,7 +31,7 @@ from time import sleep
 load_dotenv()
 
 # Set Up Logging
-myLogger = logger.main()
+myLogger = logger.main(".\\Axonius_Parser_log.txt")
 myLogger.info("Starting Axonius Parser.....")
 
 # Initialize Axonius Client
@@ -66,10 +66,10 @@ if data:
         parsed_axonius_data, no_hostname_assets = parse_axonius_data(data_batch)
         total_assets_parsed += len(parsed_axonius_data)
         hostname_errors += len(no_hostname_assets)
-        # if(len(parsed_axonius_data) != 0):
-        #     # with open(f".\\parsed_{i}.json", "w") as file:
-        #     #     json.dump(parsed_axonius_data, file)
-        #     upload_axonius_data(myLogger, credentials, parsed_axonius_data, os.getenv("CUSTOMER_ID"))
+        if(len(parsed_axonius_data) != 0):
+            # with open(f".\\parsed_{i}.json", "w") as file:
+            #     json.dump(parsed_axonius_data, file)
+            upload_axonius_data(myLogger, credentials, parsed_axonius_data, os.getenv("CUSTOMER_ID"))
                 
         for j in range(1):
             sleep(1)
