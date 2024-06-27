@@ -5,7 +5,7 @@ import json
 import requests
 
 
-def upload_axonius_data(credentials, entities, customer_id):
+def upload_axonius_data(myLogger, credentials, entities, customer_id):
     """
     upload data to SecOps using Ingestion API.
     connect to SecOps using secret_key, parse Axonius data into UDM and upload the list of assets/entities to SecOps
@@ -41,6 +41,7 @@ def upload_axonius_data(credentials, entities, customer_id):
 
         # Check the response status
         if response.status_code == 200:
+            myLogger.info(f"uploaded {len(entities)} assets")
             print("Successfully uploaded asset data.")
         else:
             print(f"Failed to upload asset data.")

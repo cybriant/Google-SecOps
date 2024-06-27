@@ -27,7 +27,7 @@ def get_axonius_data(client, num_devices=-1):
         # Else limit the number of devices
         else:
             data = client.devices.get(fields_root = "gui", max_rows=num_devices, fields_regex=fields_regex)
-        return data
+        return data, "Complete"
 
     except ConnectError as e:
         print(f"Connection error: {e}")
@@ -37,4 +37,4 @@ def get_axonius_data(client, num_devices=-1):
         print(f"JSON error: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-    return None
+    return None, e

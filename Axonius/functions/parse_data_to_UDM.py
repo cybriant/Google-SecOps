@@ -9,8 +9,8 @@ def parse_axonius_data(data):
         List: list of parsed asset data (in UDM format) or None if error occurs
     """
     parsed_data = []
-    
-    print(f"Parsing {len(data)} assets...")
+    no_hostname_assets = []
+
     current_datetime = datetime.utcnow()
     formatted_datetime = current_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'    
     for asset in data:
@@ -25,22 +25,14 @@ def parse_axonius_data(data):
             # Hostname can be a list or string
             hostname = ""
                 
-            try:
-                if "specific_data.data.hostname" in asset:
-                    if isinstance(asset.get("specific_data.data.hostname"), str):
-                        hostname = asset["specific_data.data.hostname"]
-                    elif isinstance(asset.get("specific_data.data.hostname"), list):
-                        hostname = asset["specific_data.data.hostname"][0]
-                else:
-                    print("Hostname not found!")
-                    print(f"Skipping this asset: {asset_id}")
-                    continue
-            except Exception as e:
-                print("Error gathering hostname!")
-                print(f"Skipping this asset: {asset_id}")
-                print(e)                    
-                continue
-                
+            if "specific_data.data.hostname" in asset:
+                if isinstance(asset.get("specific_data.data.hostname"), str):
+                    hostname = asset["specific_data.data.hostname"]
+                elif isinstance(asset.get("specific_data.data.hostname"), list):
+                    hostname = asset["specific_data.data.hostname"][0]
+            else:
+                no_hostname_assets.append(asset_id)
+                continue                
             
             # IPS
             # From Axonius --> public_ips && network_interface_ips
@@ -48,12 +40,8 @@ def parse_axonius_data(data):
             
             # Parse through public ips --> copy over to the ips field
             ips = set()
-            try:
-                for _ in asset.get("specific_data.data.public_ips", []):
-                    ips.add(_)
-            except Exception as e:
-                print("Error gathering Ip")
-                print(e)                    
+            for _ in asset.get("specific_data.data.public_ips", []):
+                ips.add(_)
 
             # For nat_ips, we find all non-private ips (not in below range):
             # 192.168.x.x, 172.x.x.x, or 10.x.x.x, 169.254.x.x
@@ -110,23 +98,21 @@ def parse_axonius_data(data):
                     if is_in_other_ranges(ip):
                         nat_ips.add(ip)
             except Exception as e:
-                print("Error gathering Nat IPs")
-                print(e)                    
+                pass
 
             # Mac address mapped to mac
             mac = []
             try:
                 mac = asset.get("specific_data.data.network_interfaces.mac", "")
             except Exception as e:
-                print("Error gathering mac address")
-                print(e)
+                pass
 
             # Last Seen mapped to last_discover_time
             last_discover_time = formatted_datetime
             try:
                 last_discover_time = datetime.strptime(asset.get("specific_data.data.last_seen", ""), "%a, %d %b %Y %H:%M:%S %Z").strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
             except Exception as e:
-                print(f"Error gathering last seen time --> {asset["internal_axon_id"]}")
+                pass
 
             # Distribution Name and Distribution are combined and mapped to platform_software
             platform_software = {}
@@ -167,8 +153,7 @@ def parse_axonius_data(data):
                 platform_software["platform"] = dist_name
                 platform_software["platform_version"] = version
             except Exception as e:
-                print("Error gathering distribution/name")
-                print(e)
+                pass
 
             # These are the labels we need:
             # "adapters_data.gui.custom_business_unit" --> asset.labels (key-> business unit)
@@ -180,9 +165,7 @@ def parse_axonius_data(data):
                 data_center_location = asset.get("adapters_data.gui.custom_data_center_location", "")
                 location = asset.get("adapters_data.gui.custom_location", "")
             except Exception as e:
-                print(e)
-                print("GUI Adapter Data Not Found...")
-                print(asset_id)
+                pass
 
             parsed_asset["entity"] = {
                 "asset": {
@@ -202,11 +185,8 @@ def parse_axonius_data(data):
                 }
             }
         except Exception as e:
-            print("Exception in parsing asset...")
-            print(e)
+            continue
 
         parsed_data.append(parsed_asset)            
 
-    print(f"Parsed {len(data)} assets...")
-
-    return parsed_data
+    return parsed_data, no_hostname_assets
