@@ -26,16 +26,23 @@ from dotenv import load_dotenv
 import os
 import json
 from time import sleep
+import time
 
 # Load environment variables from .env file
 load_dotenv()
 
+print("Logging At: ")
+print("Axonius_Parser_Log.txt")
+
 # Set Up Logging
-myLogger = logger.main(".\\Axonius_Parser_log.txt")
+myLogger = logger.main(".\\Axonius_Parser_Log.txt")
 myLogger.info("Starting Axonius Parser.....")
 
 # Initialize Axonius Client
+myLogger.info("Initializing Axonius Client")
+start_time = time.time()
 client = initialize_client(os.getenv("AXONIUS_API_ENDPOINT"), os.getenv("AXONIUS_API_KEY"), os.getenv("AXONIUS_API_SECRET"))
+myLogger.info(f"Initialized Axonius Client In {time.time() - start_time:.2f} seconds.")
 
 # Initialize SecOps Credentials (Service Account, Scopes)
 service_account_details = json.loads(os.getenv("SECOPS_API_SERVICE_ACCOUNT"))
@@ -44,16 +51,17 @@ credentials = initialize_secops(service_account_details, scopes)
 
 # Retrive Axonius Data
 # You can also specify max_rows to get (-1 implies get all data)
-myLogger.info("Getting Data from Axonius...")
+myLogger.info("Getting Data from Axonius... (This process takes about 10 minutes.)")
+start_time = time.time()
 data, e = get_axonius_data(client, num_devices=-1)
 if e != "Complete":
     myLogger.info(f"Error Retrieving Data From Axonius. {e}")
     exit()
-
-myLogger.info("Got Data from Axonius.")     
+myLogger.info(f"Got {len(data)} Assets From Axonius In {time.time() - start_time:.2f} seconds.")
 
 # Parse and upload in batches of 1000 assets
-myLogger.info("Parsing and uploading Axonius data...")
+myLogger.info("Parsing and Uploading Axonius data... (This process takes about 2 minutes.)")
+start_time = time.time()
 
 BATCH_SIZE = 1000
 total_assets_parsed = 0
@@ -74,7 +82,7 @@ if data:
         for j in range(1):
             sleep(1)
 
-    myLogger.info("Parsed and uploaded Axonius Data!")
+    myLogger.info(f"Parsed and uploaded Axonius Data in {time.time() - start_time:.2f} seconds.")
     myLogger.info(f"Parsed {total_assets_parsed} assets out of {total_assets}")
     myLogger.info(f"{hostname_errors} assets did not have a hostname!")
 else:
