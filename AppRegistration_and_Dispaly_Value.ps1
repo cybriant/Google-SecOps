@@ -44,7 +44,7 @@ $aservicehealth = "e2cea78f-e743-4d8f-a16a-75b629a038ae=Role"
 Connect-AzureAD -TenantId $tenantId
 
 # Check if BDTest app registration exists
-$appName = "GoogleSecOpsdemo"
+$appName = "GoogleSecOps"
 $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
