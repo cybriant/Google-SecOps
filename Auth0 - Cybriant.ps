@@ -13,8 +13,35 @@ $dopenid = "37f7f235-527c-4136-accd-4a02d197296e=Scope"
 # Connect to Azure AD
 Connect-AzureAD -TenantId $tenantId
 
-# Check if Auth0 app registration exists
-$appName = "Ath0 Cybriant"
+# Create Azure Security Group "CybriantServices"
+Write-Host "Creating Azure Security Group 'CybriantServices'..."
+$groupName = "CybriantServices"
+$groupDescription = "Security group for Cybriant services and applications"
+
+# Check if the group already exists
+$existingGroup = Get-AzureADGroup -Filter "DisplayName eq '$groupName'"
+
+if (-not $existingGroup) {
+    Write-Host "Security group '$groupName' does not exist." -ForegroundColor Yellow
+    $createGroup = Read-Host "Do you want to create the security group '$groupName'? (Y/N)"
+    
+    if ($createGroup -eq "Y" -or $createGroup -eq "y") {
+        try {
+            $newGroup = New-AzureADGroup -DisplayName $groupName -Description $groupDescription -MailEnabled $false -SecurityEnabled $true -MailNickName $groupName
+            Write-Host "Successfully created security group '$groupName' with ObjectId: $($newGroup.ObjectId)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "Error creating security group: $($_.Exception.Message)" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "Security group creation was cancelled by user." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "Security group '$groupName' already exists. ObjectId: $($existingGroup.ObjectId)" -ForegroundColor Green
+}
+
+# Check if BDTest app registration exists
+$appName = "Ath0 CybriantServices"
 $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
@@ -33,7 +60,7 @@ az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dop
 
 
 # Add Auth0 Cybriant permissions
-Write-Host "Adding Auth0 Cybriant permissions..."
+Write-Host "Adding Auth0 CybriantServices permissions..."
 foreach ($permission in $o365Permissions.GetEnumerator()) {
     Write-Host "Adding permission: $($permission.Key)"
     az ad app permission add --id $app.ObjectId --api $o365ApiId --api-permissions $permission.Value
@@ -41,7 +68,7 @@ foreach ($permission in $o365Permissions.GetEnumerator()) {
 
 
 # Create a new client secret
-$secretName = "Auth0 Cybriant secret"
+$secretName = "Auth0 CybriantServices secret"
 $startDate = Get-Date
 $endDate = $startDate.AddDays(730)
 
