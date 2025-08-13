@@ -1,0 +1,64 @@
+# Prompt for Directory (Tenant) ID
+$tenantId = Read-Host "Enter your Azure Directory (Tenant) ID"
+
+#
+$grapid = "00000003-0000-0000-c000-000000000000"
+$ddirectoryreadall = "06da0dbc-49e2-44d2-8312-53f166ab848a=Scope"
+$duserread = "e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope"
+$demail = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0=Scope"
+$dprofile = "14dad69e-099b-42c9-810b-d002981feec1=Scope"
+$dopenid = "37f7f235-527c-4136-accd-4a02d197296e=Scope"
+
+
+# Connect to Azure AD
+Connect-AzureAD -TenantId $tenantId
+
+# Check if Auth0 app registration exists
+$appName = "Ath0 Cybriant"
+$app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
+
+if (-not $app) {
+    Write-Host "App registration '$appName' does not exist. Creating..."
+    $app = New-AzureADApplication -DisplayName $appName
+    Write-Host "Created app registration with ObjectId: $($app.ObjectId)"
+} else {
+    Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
+}
+
+az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dprofile
+az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $ddirectoryreadall
+az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $duserread
+az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $demail
+az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dopenid
+
+
+# Add Auth0 Cybriant permissions
+Write-Host "Adding Auth0 Cybriant permissions..."
+foreach ($permission in $o365Permissions.GetEnumerator()) {
+    Write-Host "Adding permission: $($permission.Key)"
+    az ad app permission add --id $app.ObjectId --api $o365ApiId --api-permissions $permission.Value
+}
+
+
+# Create a new client secret
+$secretName = "Auth0 Cybriant secret"
+$startDate = Get-Date
+$endDate = $startDate.AddDays(730)
+
+$secret = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId `
+    -CustomKeyIdentifier $secretName `
+    -StartDate $startDate `
+    -EndDate $endDate
+
+    
+Write-Host "Client Secret Value: $($secret.Value)"
+Write-Host "Expires On: $($secret.EndDate)"
+Write-Host "`nApplication Registration Details:"
+Write-Host "--------------------------------"
+Write-Host "Application Name: $appName"
+Write-Host "Client ID: $($app.AppId)"
+Write-Host "Tenant ID: $tenantId"
+Write-Host "`nClient Secret Details:"
+Write-Host "--------------------------------"
+Write-Host "Secret Name: $secretName"
+Write-Host "Secret Value: $($secret.Value)"
