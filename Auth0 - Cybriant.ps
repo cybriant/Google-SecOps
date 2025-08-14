@@ -46,17 +46,17 @@ $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
     Write-Host "App registration '$appName' does not exist. Creating..."
-    $app = New-AzureADApplication -DisplayName $appName
+    $app = New-AzureADApplication -DisplayName $appName -IdentifierUris "https://cybriant.auth0.com/login/callback"
     Write-Host "Created app registration with ObjectId: $($app.ObjectId)"
 } else {
     Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
 }
 
 # Add redirect URLs
-$app = az ad app list --display-name "Ath0 CybriantServices" --query "[0]" | ConvertFrom-Json
+$app1 = az ad app list --display-name "Auth0 CybriantServices" --query "[0]" | ConvertFrom-Json
 
 # Add the redirect URI
-az ad app update --id $app.appId --web-redirect-uris "https://cybriant.auth0.com/login/callback"
+az ad app update --id $app1.appId --web-redirect-uris "https://cybriant.auth0.com/login/callback"
 
 Write-Host "Redirect URLs have been configured for the app registration." -ForegroundColor Green
 
