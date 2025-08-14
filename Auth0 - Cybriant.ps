@@ -52,6 +52,14 @@ if (-not $app) {
     Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
 }
 
+# Add redirect URLs
+$app = az ad app list --display-name "Ath0 CybriantServices" --query "[0]" | ConvertFrom-Json
+
+# Add the redirect URI
+az ad app update --id $app.appId --web-redirect-uris "https://cybriant.auth0.com/login/callback"
+
+Write-Host "Redirect URLs have been configured for the app registration." -ForegroundColor Green
+
 az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dprofile
 az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $ddirectoryreadall
 az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $duserread
