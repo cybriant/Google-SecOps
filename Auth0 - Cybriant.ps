@@ -40,8 +40,8 @@ if (-not $existingGroup) {
     Write-Host "Security group '$groupName' already exists. ObjectId: $($existingGroup.ObjectId)" -ForegroundColor Green
 }
 
-# Check if BDTest app registration exists
-$appName = "Ath0 CybriantServices"
+# Check if Auth0 CybriantServices app registration exists
+$appName = "Auth0 CybriantServices"
 $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
@@ -51,7 +51,8 @@ if (-not $app) {
 } else {
     Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
 }
-
+#Add Service Principal
+New-AzureADServicePrincipal -AppId $app.AppId
 # Add redirect URLs
 $app1 = az ad app list --display-name "Auth0 CybriantServices" --query "[0]" | ConvertFrom-Json
 
