@@ -46,7 +46,7 @@ $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
     Write-Host "App registration '$appName' does not exist. Creating..."
-    $app = New-AzureADApplication -DisplayName $appName -IdentifierUris "https://cybriant.auth0.com/login/callback"
+    $app = New-AzureADApplication -DisplayName $appName # -IdentifierUris "https://cybriant.auth0.com/login/callback"
     Write-Host "Created app registration with ObjectId: $($app.ObjectId)"
 } else {
     Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
