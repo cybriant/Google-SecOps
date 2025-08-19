@@ -40,32 +40,17 @@ if (-not $existingGroup) {
     Write-Host "Security group '$groupName' already exists. ObjectId: $($existingGroup.ObjectId)" -ForegroundColor Green
 }
 
-# Check if Auth0 CybriantServices app registration exists
+# Check if BDTest app registration exists
 $appName = "Auth0 CybriantServices"
 $app = Get-AzureADApplication -Filter "DisplayName eq '$appName'"
 
 if (-not $app) {
     Write-Host "App registration '$appName' does not exist. Creating..."
-    $app = New-AzureADApplication -DisplayName $appName # -IdentifierUris "https://cybriant.auth0.com/login/callback"
+    $app = New-AzureADApplication -DisplayName $appName
     Write-Host "Created app registration with ObjectId: $($app.ObjectId)"
 } else {
     Write-Host "App registration '$appName' already exists. ObjectId: $($app.ObjectId)"
 }
-#Add Service Principal
-New-AzureADServicePrincipal -AppId $app.AppId
-# Add redirect URLs
-$app1 = az ad app list --display-name "Auth0 CybriantServices" --query "[0]" | ConvertFrom-Json
-
-# Add the redirect URI
-az ad app update --id $app1.appId --web-redirect-uris "https://cybriant.auth0.com/login/callback"
-
-Write-Host "Redirect URLs have been configured for the app registration." -ForegroundColor Green
-
-az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dprofile
-az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $ddirectoryreadall
-az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $duserread
-az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $demail
-az ad app permission add --id $app.ObjectId --api $grapid --api-permissions $dopenid
 
 
 # Add Auth0 Cybriant permissions
@@ -86,6 +71,23 @@ $secret = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId `
     -StartDate $startDate `
     -EndDate $endDate
 
+# Add redirect URLs
+$app = az ad app list --display-name "Auth0 CybriantServices" --query "[0]" | ConvertFrom-Json
+
+# Add the redirect URI
+az ad app update --id $app.appId --web-redirect-uris "https://cybriant.auth0.com/login/callback"
+
+Write-Host "Redirect URLs have been configured for the app registration." -ForegroundColor Green
+
+az ad app permission add --id $app.AppId --api $grapid --api-permissions $dprofile
+az ad app permission add --id $app.AppId --api $grapid --api-permissions $ddirectoryreadall
+az ad app permission add --id $app.AppId --api $grapid --api-permissions $duserread
+az ad app permission add --id $app.AppId --api $grapid --api-permissions $demail
+az ad app permission add --id $app.AppId --api $grapid --api-permissions $dopenid
+
+# Add Registered App to Enterprise App's list.
+az ad sp create --id $app.appId
+az ad sp update --id $app.appId --set 'tags=["WindowsAzureActiveDirectoryIntegratedApp"]'
     
 Write-Host "Client Secret Value: $($secret.Value)"
 Write-Host "Expires On: $($secret.EndDate)"
