@@ -1,0 +1,29 @@
+# Cloud Build configuration for building and deploying container images
+# This file defines the CI/CD pipeline that runs when code is pushed to the repository
+
+steps:
+  # Step 1: Build the container image using Docker
+  # This step creates a Docker image from the Dockerfile in the current directory
+  - name: 'gcr.io/cloud-builders/docker'  # Use official Docker builder
+    id: 'Build the container image'        # Step identifier
+    args:
+      - 'build'                           # Docker build command
+      - '-t'                              # Tag flag
+      # Image name format: region-docker.pkg.dev/project-id/repository-name/image-name:tag
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/repository-name/image-name:latest'
+      - '.'                               # Build context (current directory)
+      - '-f'                              # Dockerfile flag
+      - Dockerfile                        # Specify Dockerfile to use
+
+  # Step 2: Push the container image to Artifact Registry
+  # This step uploads the built image to Google Cloud Artifact Registry for storage
+  - name: 'gcr.io/cloud-builders/docker'  # Use official Docker builder
+    id: 'Push the container image'         # Step identifier
+    args:
+      - 'push'                            # Docker push command
+      # Push to the same image location specified in the build step
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/repository-name/image-name:latest'
+
+# Build options configuration
+options:
+  logging: CLOUD_LOGGING_ONLY             # Use Cloud Logging

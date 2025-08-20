@@ -1,0 +1,10 @@
+google-cloud-bigquery
+google-cloud-core
+google-cloud-run
+python-dotenv
+pandas
+google-cloud-secret-manager
+secops
+tabulate
+pyarrow
+pandas_gbq
